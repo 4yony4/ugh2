@@ -5,7 +5,8 @@ import 'package:flame_forge2d/body_component.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 
-class TierraBody extends BodyComponent{
+class TierraBody extends BodyComponent with ContactCallbacks
+{
 
   TiledObject tiledBody;
   Vector2 scales=Vector2(1, 1);
@@ -55,12 +56,12 @@ class TierraBody extends BodyComponent{
           type: BodyType.static);
     Body cuerpo= world.createBody(definicionCuerpo);
 
+    fixtureDef.userData=this;
 
     //FixtureDef fixtureDef=FixtureDef(shape);
     cuerpo.createFixture(fixtureDef);
     return cuerpo;
 
   }
-
 
 }

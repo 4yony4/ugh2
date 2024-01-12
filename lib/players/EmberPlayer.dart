@@ -15,6 +15,7 @@ class EmberPlayer extends SpriteAnimationComponent
 
   late int iTipo=-1;
 
+
   EmberPlayer({
     required super.position,required this.iTipo
     ,required super.size
@@ -33,9 +34,10 @@ class EmberPlayer extends SpriteAnimationComponent
     );
 
   }
+
 }
 
-class EmberPlayerBody extends BodyComponent with KeyboardHandler{
+class EmberPlayerBody extends BodyComponent with KeyboardHandler,ContactCallbacks{
   final Vector2 velocidad = Vector2.zero();
   final double aceleracion = 200;
   final Set<LogicalKeyboardKey> magiaSubZero={LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.keyA};
@@ -50,28 +52,57 @@ class EmberPlayerBody extends BodyComponent with KeyboardHandler{
   final _defaultColor = Colors.red;
   late EmberPlayer emberPlayer;
   late double jumpSpeed=0.0;
+  Vector2 initialPosition;
+  bool blEspacioLiberado=true;
+  int iVidas=3;
 
-  EmberPlayerBody({Vector2? initialPosition,required this.iTipo,
+  EmberPlayerBody({required this.initialPosition,required this.iTipo,
     required this.tamano})
-      : super(
-    fixtureDefs: [
-      FixtureDef(
-        CircleShape()..radius = tamano.x/2,
-        restitution: 0.8,
-        friction: 0.4,
-      ),
-    ],
-    bodyDef: BodyDef(
+      : super();
+
+  @override
+  Body createBody() {
+    // TODO: implement createBody
+
+    BodyDef definicionCuerpo= BodyDef(position: initialPosition,
+        type: BodyType.dynamic,angularDamping: 0.8,userData: this);
+
+    Body cuerpo= world.createBody(definicionCuerpo);
+
+
+    final shape=CircleShape();
+    shape.radius=tamano.x/2;
+
+    FixtureDef fixtureDef=FixtureDef(
+      shape,
+      //density: 10.0,
+      friction: 0.2,
+      restitution: 0.5, userData: this
+    );
+    cuerpo.createFixture(fixtureDef);
+
+    return cuerpo;
+
+    /*
+    FixtureDef(
+      CircleShape()..radius = tamano.x/2,
+      restitution: 0.8,
+      friction: 0.4,
+    );
+
+    BodyDef(
       angularDamping: 0.8,
       position: initialPosition ?? Vector2.zero(),
       type: BodyType.dynamic,
-    ),
-  );
 
+    );
+*/
+  }
 
   @override
   Future<void> onLoad() {
     // TODO: implement onLoad
+
     emberPlayer=EmberPlayer(position: Vector2(0,0),iTipo: iTipo,size:tamano);
     add(emberPlayer);
     return super.onLoad();
@@ -98,30 +129,52 @@ class EmberPlayerBody extends BodyComponent with KeyboardHandler{
     else if(keysPressed.contains(LogicalKeyboardKey.arrowDown)){
       position.y+=20;
     }*/
-    horizontalDirection = 0;
-    verticalDirection = 0;
 
-    if((keysPressed.contains(LogicalKeyboardKey.keyA) ||
-        keysPressed.contains(LogicalKeyboardKey.arrowLeft))){
-      horizontalDirection=-1;
-    }
-    else if((keysPressed.contains(LogicalKeyboardKey.keyD) ||
-        keysPressed.contains(LogicalKeyboardKey.arrowRight))){
-      horizontalDirection=1;
-    }
+    final bool isKeyDown = event is RawKeyDownEvent;
+    final bool isKeyUp = event is RawKeyUpEvent;
+    //print("3333333---------->>>>>>>>>>>.   ${isKeyDown}     ${isKeyUp}");
+
+    if(isKeyDown){
+      horizontalDirection = 0;
+      verticalDirection = 0;
+
+      if((keysPressed.contains(LogicalKeyboardKey.keyA) ||
+          keysPressed.contains(LogicalKeyboardKey.arrowLeft))){
+        horizontalDirection=-1;
+      }
+      else if((keysPressed.contains(LogicalKeyboardKey.keyD) ||
+          keysPressed.contains(LogicalKeyboardKey.arrowRight))){
+        horizontalDirection=1;
+      }
 
 
-    if((keysPressed.contains(LogicalKeyboardKey.keyW) ||
-        keysPressed.contains(LogicalKeyboardKey.arrowUp))){
-      verticalDirection=-1;
-    }
-    else if((keysPressed.contains(LogicalKeyboardKey.keyS) ||
-        keysPressed.contains(LogicalKeyboardKey.arrowDown))){
-      verticalDirection=1;
-    }
+      if((keysPressed.contains(LogicalKeyboardKey.keyW) ||
+          keysPressed.contains(LogicalKeyboardKey.arrowUp))){
+        verticalDirection=-1;
+      }
+      else if((keysPressed.contains(LogicalKeyboardKey.keyS) ||
+          keysPressed.contains(LogicalKeyboardKey.arrowDown))){
+        verticalDirection=1;
+      }
 
+      //print("---------->>>>>>>>>>>.   ${blEspacioLiberado}");
+      if(keysPressed.contains(LogicalKeyboardKey.space)){
+        if(blEspacioLiberado)jumpSpeed=2000;
+        blEspacioLiberado=false;
+        //body.gravityOverride=Vector2(0, -20);
+        //this.bodyDef?.gravityOverride=Vector2(0, -20);
+      }
+    }
+    else if(isKeyUp){
+      //if(keysPressed.contains(LogicalKeyboardKey.space)){
+        //print("222222222---------->>>>>>>>>>>.   ${blEspacioLiberado}");
+        blEspacioLiberado=true;
+      //}
+    }
     return true;
   }
+
+
 
   @override
   void update(double dt) {
@@ -136,8 +189,9 @@ class EmberPlayerBody extends BodyComponent with KeyboardHandler{
     velocidad.x = horizontalDirection * aceleracion;
     velocidad.y = verticalDirection * aceleracion;
     velocidad.y += -1 * jumpSpeed;
+    jumpSpeed=0;
 
-    print("--------->>>>>>>>> ${velocidad}");
+   // print("--------->>>>>>>>> ${velocidad}");
     //game.mapComponent.position -= velocity * dt;
 
     /**

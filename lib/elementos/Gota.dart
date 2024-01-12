@@ -5,7 +5,7 @@ import 'package:flame/components.dart';
 import '../games/UghGame.dart';
 
 class Gota extends SpriteAnimationComponent
-    with HasGameRef<UghGame>,CollisionCallbacks{
+    with HasGameRef<UghGame>{
 
   Gota({
     required super.position, required super.size

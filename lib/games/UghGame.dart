@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame_tiled/flame_tiled.dart';
+import 'package:ugh2/bodies/GotaBody.dart';
 import 'package:ugh2/bodies/TierraBody.dart';
 import 'package:ugh2/elementos/Gota.dart';
 
@@ -76,9 +77,14 @@ class UghGame extends Forge2DGame with
     ObjectGroup? gotas=mapComponent.tileMap.getLayer<ObjectGroup>("gotas");
 
     for(final gota in gotas!.objects){
-      Gota spriteGota = Gota(position: Vector2(gota.x,gota.y),
+      /*Gota spriteGota = Gota(position: Vector2(gota.x,gota.y),
           size: Vector2(64*wScale,64*hScale));
-      add(spriteGota);
+      add(spriteGota);*/
+
+      GotaBody gotaBody = GotaBody(posXY: Vector2(gota.x,gota.y),
+          tamWH: Vector2(64*wScale,64*hScale));
+      gotaBody.onBeginContact=InicioContactosDelJuego;
+      add(gotaBody);
     }
 
     ObjectGroup? tierras=mapComponent.tileMap.getLayer<ObjectGroup>("tierra");
@@ -86,13 +92,14 @@ class UghGame extends Forge2DGame with
     for(final tiledObjectTierra in tierras!.objects){
       TierraBody tierraBody = TierraBody(tiledBody: tiledObjectTierra,
           scales: Vector2(wScale,hScale));
+      //tierraBody.onBeginContact=InicioContactosDelJuego;
       add(tierraBody);
     }
 
     _player = EmberPlayerBody(initialPosition: Vector2(128, canvasSize.y - 350,),
       iTipo: EmberPlayerBody.I_PLAYER_TANYA,tamano: Vector2(50,100)
     );
-
+    _player.onBeginContact=InicioContactosDelJuego;
     //_player2 = EmberPlayer(position: Vector2(328, canvasSize.y - 150),);
 
     add(_player);
@@ -105,6 +112,24 @@ class UghGame extends Forge2DGame with
   Color backgroundColor() {
     // TODO: implement backgroundColor
     return Color.fromRGBO(102, 178, 255, 1.0);
+  }
+
+  void InicioContactosDelJuego(Object objeto,Contact contact){
+    if(objeto is GotaBody){
+      //print("ES CONTACTO DE GOTABODY");
+      //objeto.removeFromParent();
+    }
+    //else if(objeto is TierraBody){
+    //  print("ES CONTACTO DE TIERRABODY");
+    //}
+    else if(objeto is EmberPlayerBody){
+      print("ES CONTACTO DE EMBERBODY");
+      _player.iVidas--;
+      if(_player.iVidas==0){
+        _player.removeFromParent();
+      }
+      //objeto.removeFromParent();
+    }
   }
 
 
